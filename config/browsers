@@ -1,0 +1,23 @@
+#! /bin/bash
+
+declare -A WEB_browser
+WEB_browser["firefox"]="firefox"
+WEB_browser["chrome"]="chrome"
+WEB_browser["opera"]="opera"
+WEB_browser["w3m"]="w3m"
+WEB_browser["links"]="links"
+
+declare -A WEB_browser_cmd
+WEB_browser_cmd["firefox"]="firefox"
+WEB_browser_cmd["chrome"]="google-chrome"
+WEB_browser_cmd["opera"]="opera"
+WEB_browser_cmd["w3m"]="w3m"
+WEB_browser_cmd["links"]="links"
+
+declare -A WEB_browser_is_term_based
+WEB_browser_is_term_based["firefox"]="no"
+WEB_browser_is_term_based["chrome"]="no"
+WEB_browser_is_term_based["opera"]="no"
+WEB_browser_is_term_based["w3m"]="yes"
+WEB_browser_is_term_based["links"]="yes"
+

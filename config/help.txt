@@ -1,0 +1,14 @@
+usage: web [options] [arguments] (general case)
+   or: web                       (interactive mode)
+
+options:
+    -c, -cgf, --config                enter in the configuration mode
+    -h, --help                        display this help message
+    -brw, --brw, --browsers           list the configured browsers
+    -s, --search                      enter in the search mode 
+        [ -l, --list ]                [list the configured search engines]
+    -u, -url, --url                   enter in the open url mode
+    -a, -add, --add                   add a new bookmark
+    -l, --list                        list the existing bookmarks
+    -b, --bookmark                    open a bookmark
+    -r, --remove                      remove a bookmark
