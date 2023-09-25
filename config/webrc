@@ -1,0 +1,7 @@
+#! /bin/bash
+
+# DEFAULT BROWSER AND ENGINE
+    WEB_BROWSER="firefox"
+    WEB_ENGINE="google"
+
+

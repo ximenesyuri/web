@@ -14,6 +14,13 @@ WEB_browser_cmd["opera"]="opera"
 WEB_browser_cmd["w3m"]="w3m"
 WEB_browser_cmd["links"]="links"
 
+declare -A WEB_browser_cmd_new_window
+WEB_browser_cmd["firefox"]="firefox --new-window"
+WEB_browser_cmd["chrome"]="google-chrome --new-window"
+WEB_browser_cmd["opera"]="opera -newwindow"
+WEB_browser_cmd["w3m"]="w3m"
+WEB_browser_cmd["links"]="links"
+
 declare -A WEB_browser_is_term_based
 WEB_browser_is_term_based["firefox"]="no"
 WEB_browser_is_term_based["chrome"]="no"

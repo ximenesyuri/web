@@ -1,0 +1,14 @@
+#! /bin/bash
+
+# Search Engines
+declare -A WEB_search_engine
+WEB_search_engine["duckduckgo"]="duckduckgo"
+WEB_search_engine["google"]="google"
+WEB_search_engine["bing"]="bing"
+
+# Search Engines Urls
+declare -A WEB_search_engine_base
+WEB_search_engine_base["duckduckgo"]="https://duckduckgo.com"
+WEB_search_engine_base["google"]="https://google.com/search"
+WEB_search_engine_base["bing"]="https://bing.com/search"
+

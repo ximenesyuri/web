@@ -5,8 +5,10 @@ function web(){
 ## Includes
     source ${BASH_SOURCE%/*}/pkgfile
     source $PKG_install_dir/config/browsers
-    if [[ -f "$PKG_install_dir/config/config" ]]; then
-       source $PKG_install_dir/config/config
+    source $PKG_install_dir/config/engines
+    source $PKG_install_dir/config/protocols
+    if [[ -f "$PKG_install_dir/config/webrc" ]]; then
+       source $PKG_install_dir/config/webrc
         has_config="ok"
        else
         echo "error: A configuration file was not identified."
@@ -223,9 +225,9 @@ function web(){
         read -e -r -p "Url to open in $WEB_BROWSER: " term
         WEB_${WEB_BROWSER}_browser_function "$term"
     elif [[ "$1" == "-c" ]] || [[ "$1" == "--config" ]] || [[ "$1" == "-cfg" ]]; then
-        sh $PKG_install_dir/config/config
+        sh $PKG_install_dir/config/core/config.sh
     elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
-        cat $PKG_install_dir/config/help.txt
+        cat $PKG_install_dir/config/core/help.txt
     elif [[ "$1" == "-t" ]] || [[ "$1" == "--template" ]]; then
         if [[ -f "$PKG_install_dir/config/config" ]]; then
             echo "There already exists a configuration file."
@@ -234,7 +236,7 @@ function web(){
             do
                 echo "Want to replace it by a template? (y/n)"
                 if [[ "$replace_config" == "yes" ]] || [[ "$replace_config" == "y" ]]; then
-                    cp $PKG_install_dir/files/config $PKG_install_dir/config/config
+                    cp $PKG_install_dir/files/webrc.tpl $PKG_install_dir/config/webrc
                     break
                 elif [[ "$replace_config" == "no" ]] || [[ "$replace_config" == "n" ]]; then
                     Aborting...
@@ -245,7 +247,7 @@ function web(){
                 fi
             done
         else
-            cp $PKG_install_dir/files/config $PKG_install_dir/config/config
+            cp $PKG_install_dir/files/webrc.tpl $PKG_install_dir/config/webrc
             echo "A template for the configuration file was created."
         fi
     elif [[ "$1" == "-brw" ]] ||
