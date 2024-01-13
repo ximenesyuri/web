@@ -93,12 +93,21 @@ function web(){
             echo "There is none saved bookmark."
         else
             echo "The following is the list of your bookmark names with corresponding url:"
+            declare -a bookmarks
+    
             while IFS= read -r line; do
-                string="$line"
-                name=${string%=*}
-                url=${string##*=}
-                echo "* $name = $url"
+                bookmark="$line"
+                bookmarks+=($bookmark)
             done < $PKG_install_dir/files/bookmarks
+            sorted_bookmarks=($(printf "%s\n" "${bookmarks[@]}" | sort))
+            for i in ${!sorted_bookmarks[@]}; do
+                spaced_bookmark=$(echo "${sorted_bookmarks[$i]}" | sed 's/=/ = /')
+                if [[ $i -lt 10 ]]; then 
+                    echo "0$i. $spaced_bookmark"
+                else
+                    echo "$i. $spaced_bookmark"
+                fi
+            done
         fi
     }
     function WEB_list_browser(){
