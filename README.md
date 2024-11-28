@@ -12,7 +12,7 @@
 
 # Dependencies
 
-- [yq(https://github.com/mikefarah/yq) `v4^`
+- [yq](https://github.com/mikefarah/yq): `version >= 4`
 
 # Install
 
