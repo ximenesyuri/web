@@ -1,0 +1,369 @@
+#!/bin/bash
+
+_web_complete() {
+    WEB_BOOKMARKS=${BASH_SOURCE%/*}/yml/bookmarks.yml
+    WEB_ENGINES=${BASH_SOURCE%/*}/yml/engines.yml
+    local cur prev opts bookmarks_list engines_list
+
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--add --list --search --remove"
+    cats="bookmarks protocols browsers engines"
+
+    if [[ -f "$WEB_BOOKMARKS" ]]; then
+        bookmarks_list=$(yq eval 'keys | .[]' "$WEB_BOOKMARKS" 2>/dev/null | tr '\n' ' ')
+    fi
+
+    if [[ -f "$WEB_ENGINES" ]]; then
+        engines_list=$(yq eval 'to_entries[] | .value | keys | .[]' "$WEB_ENGINES" 2>/dev/null | tr '\n' ' ')
+    fi
+
+    case "${prev}" in
+        web|wb)
+            if [[ "$cur" == -* || "$cur" == "" ]]; then
+                COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+            else
+                COMPREPLY=( $(compgen -W "$bookmarks_list" -- "$cur") )
+            fi
+            ;;
+        -l|--list|list)
+            COMPREPLY=( $(compgen -W "$cats" -- "$cur") )
+            ;;
+        -r|--remove|rm)
+            COMPREPLY=( $(compgen -W "$bookmarks_list" -- "$cur") )
+            ;;
+        -s|--search|search)
+            COMPREPLY=( $(compgen -W "$engines_list" -- "$cur") )
+        ;;
+    esac 
+}
+
+complete -F _web_complete web
+complete -F _web_complete wb
+
+web() {
+    WEB_BOOKMARKS=${BASH_SOURCE%/*}/yml/bookmarks.yml
+    if [[ ! -f "$WEB_BOOKMARKS" ]]; then
+        touch $WEB_BOOKMARKS
+    fi
+    WEB_CONF=${BASH_SOURCE%/*}/yml/conf.yml
+    if [[ ! -f "$WEB_CONF" ]]; then
+        touch $WEB_CONF
+    fi
+    WEB_BROWSERS=${BASH_SOURCE%/*}/yml/browser.yml
+    WEB_ENGINES=${BASH_SOURCE%/*}/yml/engines.yml
+
+    function load_config() {
+        WEB_BROWSER=$(yq eval '.default.browser' $WEB_CONF)
+        WEB_ENGINE=$(yq eval '.default.search' $WEB_CONF)
+
+        declare -gA WEB_browser_cmd
+        for browser in $(yq eval '. | keys' $WEB_BROWSERS -o=tsv); do
+            WEB_browser_cmd[$browser,cmd]=$(yq eval ".${browser}.cmd" $WEB_BROWSERS)
+            WEB_browser_cmd[$browser,private]=$(yq eval ".${browser}.private" $WEB_BROWSERS)
+            WEB_browser_cmd[$browser,profile]=$(yq eval ".${browser}.profile" $WEB_BROWSERS)
+        done
+
+        WEB_protocols=($(yq eval '.protocol | keys' $WEB_CONF -o=tsv))
+    }
+
+    function print_help(){
+        echo "
+USAGE:
+  web [command] [arguments]
+
+COMMANDS:
+  -a, --add bookmark_name url private(true/false) profile_name
+      Add a new bookmark with specified details.
+
+  -s, --search [engine] search_term
+      Search using a specific engine or default engine if none is specified.
+
+  -l, --list [category]
+      List items based on category:
+          b, book, bookmarks - List all bookmarks.
+          p, prot, protocols - List supported protocols.
+          B, brow, browsers  - List supported browsers.
+          s, src,  sources   - List available search engines.
+
+  [url]
+      Open the specified URL directly.
+    
+ALIASES:
+  wb             = web
+  wb ls[b/p/B,s] = web ls bookmarks/protocols/browsers/sources
+    "
+    }
+
+    function validate_protocol() {
+        local url="$1"
+        local protocol=${url%%:*}
+
+        local accepted_protocols=(http https)
+
+        local protocol_list
+        protocol_list=$(yq eval '.protocol | with_entries(select(. == true)) | keys' -o=tsv "$WEB_CONF" 2>/dev/null) || protocol_list=""
+
+        if [[ -n "$protocol_list" ]]; then
+            IFS=$'\n' read -r -d '' -a accepted_protocols <<< "$protocol_list"
+        fi
+
+        for proto in "${accepted_protocols[@]}"; do
+            if [[ "$proto" == "$protocol" ]]; then
+                return 0
+            fi
+        done
+
+        echo "Protocol '$protocol' is not accepted."
+        return 1
+    } 
+
+    function add_bookmark() {
+        local full_name="$1"
+        local url="$2"
+        local private="${3:-false}"
+        local profile="${4:-}"
+
+        if ! validate_protocol "$url"; then
+            return 1
+        fi
+
+        local yq_path="${full_name//:/\.}"
+
+        yq eval --inplace \
+            ".${yq_path}.url = \"${url}\" | .${yq_path}.private = ${private} | .${yq_path}.profile = \"${profile}\"" \
+            "$WEB_BOOKMARKS"
+        if [[ ! "$?" == "0" ]]; then
+            return 1
+        fi
+        
+        echo "Bookmark '$full_name' added:"
+        echo "url = '$url'"
+        echo "private = '$private'"
+        echo "profile = '$profile'"
+    }
+
+    function remove_bookmark() {
+        local force_remove=false
+        local bookmark
+
+        if [[ "$1" == "-f" || "$1" == "--force" ]]; then
+            force_remove=true
+            shift
+        fi
+        bookmark="$1"
+
+        if [[ -z "$bookmark" ]]; then
+            echo "No bookmark specified to remove."
+            return 1
+        fi
+
+        local yq_path="${bookmark//:/\.}"
+
+        local is_namespace
+        is_namespace=$(yq eval ".${yq_path} | type == \"!!map\"" "$WEB_BOOKMARKS")
+
+        if [[ -n "$is_namespace" && $force_remove == false ]]; then
+            echo "Error: '${bookmark}' is a namespace. Use '--force' to remove it."
+            return 1
+        fi
+
+        yq eval --inplace "del(.${yq_path})" "$WEB_BOOKMARKS"
+
+        if $force_remove; then
+            echo "Namespace '$bookmark' removed."
+        else
+            echo "Bookmark '$bookmark' removed."
+        fi
+    } 
+
+    function open_url() {
+        local url="$1"
+        local private="$2"
+        local profile="$3"
+
+        if ! validate_protocol "$url"; then
+            return 1
+        fi
+
+        if [[ -z "$WEB_BROWSER" ]]; then
+            if command -v xdg-open &> /dev/null; then
+                xdg-open "$url" & disown
+                return 0
+            else
+                echo "No valid browser or xdg-open available."
+                return 1
+            fi
+        fi
+
+        local cmd="${WEB_browser_cmd[$WEB_BROWSER,cmd]}"
+        local options=""
+
+        if [[ "$private" == "true" ]]; then
+            options+=" ${WEB_browser_cmd[$WEB_BROWSER,private]}"
+        fi
+
+        if [[ -n "$profile" && "$profile" != "null" ]]; then
+           options+=" ${WEB_browser_cmd[$WEB_BROWSER,profile]} \"$profile\""
+        fi
+
+        if [[ -z "$cmd" ]]; then
+            echo "No valid browser command found for $WEB_BROWSER."
+            return 1
+        fi
+
+        local full_cmd="$cmd $options \"$url\""
+        eval "$full_cmd & disown"
+    } 
+
+    function open_bookmark() {
+        local combined_name="$@"
+        local bookmark_path
+
+        if [[ "$combined_name" == *":"* ]]; then
+            bookmark_path="${combined_name//:/\.}"
+        else
+            bookmark_path="${combined_name//\ /\.}"
+        fi
+
+        local url
+        local private
+        local profile
+        url=$(yq eval ".${bookmark_path}.url" "$WEB_BOOKMARKS")
+        private=$(yq eval ".${bookmark_path}.private" "$WEB_BOOKMARKS")
+        profile=$(yq eval ".${bookmark_path}.profile" "$WEB_BOOKMARKS")
+
+        if [[ -z "$url" || "$url" == "null" ]]; then
+            echo "No bookmark found for '$combined_name'."
+            return 1
+        fi
+
+        open_url "$url" "$private" "$profile"
+    }    
+
+    function search_term() {
+        local source="$1"
+        local term="$2"
+
+        if [[ -z "$term" ]]; then
+            term="$source"
+            source="${WEB_ENGINE:-duckduckgo}"
+        fi
+
+        local base_url=""
+        
+        for namespace in $(yq eval '. | keys' $WEB_ENGINES -o=tsv); do
+            base_url=$(yq eval ".${namespace}.${source}.url" $WEB_ENGINES)
+            if [[ -n "$base_url" && "$base_url" != "null" ]]; then
+                break
+            fi
+        done
+
+        if [[ -z "$base_url" || "$base_url" == "null" ]]; then
+            echo "No search engine found for '$source'."
+            return 1
+        fi
+
+        local search_url="${base_url//...}${term// /+}"
+        eval "${WEB_browser_cmd[$WEB_BROWSER,cmd]} \"$search_url\" & disown"
+    }
+
+    function list_bookmarks() { 
+        echo "Bookmarks:"
+        echo "-----------"
+        yq eval '' $WEB_BOOKMARKS -o=p
+    }
+
+    function list_protocols() {
+        echo "Protocols:"
+        echo "-----------"
+        for protocol in "${WEB_protocols[@]}"; do
+            echo "- $protocol"
+        done
+    }
+
+    function list_browsers() {
+        echo "Browsers:"
+        echo "-----------"
+        for browser in $(yq eval '. | keys' $WEB_BROWSERS -o=tsv); do
+            echo "- $browser"
+        done
+    }
+
+    function list_search_sources() {
+        echo "Search Engines:"
+        echo "----------------"
+        for namespace in $(yq eval '. | keys' $WEB_ENGINES -o=tsv); do
+            for engine in $(yq eval ".${namespace} | keys" $WEB_ENGINES -o=tsv); do
+                echo "- ${namespace}.${engine}"
+            done
+        done
+    }
+
+    if [[ -z "$WEB_BROWSER" ]]; then
+        load_config
+    fi
+
+    if [[ -z "$1" ]]; then
+        print_help
+        return
+    fi
+
+    if [[ "$1" =~ ^(https?|ssh):// ]]; then
+        open_url "$1"
+        return
+    fi
+
+    case "$1" in
+        -h|--help|help)
+            print_help ;;
+        -a|--add|add)
+            if [[ -n "$2" ]]; then
+                shift 1
+                add_bookmark "$@"
+            else
+                echo "Usage: web -a bookmark_name url private(optional, bool) profile_name(optional)"
+            fi
+            ;;
+        -r|--remove|rm)
+            if [[ -n "$2" ]]; then
+                shift 1
+                remove_bookmark "$@"
+            else
+                echo "Usage: web -r bookmark_name or web -r -f namespace"
+            fi
+            ;;
+        -s|--search|search)
+            load_config
+            search_term "$2" "$3"
+            ;;
+        -l|--list|list|ls)
+            case "$2" in
+                book|bookmarks|b)
+                    list_bookmarks ;;
+                prot|protocol|protocols|p)
+                    list_protocols ;;
+                browser|browsers|B)
+                    list_browsers ;;
+                source|src|s)
+                    list_search_sources ;;
+                *)
+                    echo "Invalid list option. Use b/bookmarks, p/protocols, B/browsers, or s/sources." ;;
+            esac
+            ;;
+        lsb)
+            list_bookmarks ;;
+        lsp)
+            list_protocols ;;
+        lsB)
+            list_browsers ;;
+        lse|lss)
+            list_search_sources ;;
+        *)
+            load_config
+            open_bookmark "$@"
+            ;;
+    esac
+}
+
+alias wb="web"

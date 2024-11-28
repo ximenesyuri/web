@@ -1,0 +1,9 @@
+default:
+  search: google
+  browser: firefox
+
+protocol:
+  http: true
+  https: true
+  ssh: true
+

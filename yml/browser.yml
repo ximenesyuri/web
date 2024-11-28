@@ -1,0 +1,15 @@
+firefox:
+  cmd: "firefox"
+  private: "--private-window"
+  profile: "-P"
+  alias:
+    - "ff"
+    - "fire"
+
+chrome:
+  cmd: "google-chrome"
+  private: "--incognito"
+  profile: "--profile-directory"
+  alias:
+    - "chrome"
+    - "gc"

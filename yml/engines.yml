@@ -1,0 +1,193 @@
+general:
+  google:
+    url: "https://google.com/search?q=..."
+    alias:
+      - g
+      - ggl
+  duckduckgo:
+    url: "https://duckduckgo.com/?q=..."
+    alias:
+      - ddg
+      - duck
+  bing:
+    url: "https://www.bing.com/search?q=..."
+    alias:
+      - b
+  yahoo:
+    url: "https://search.yahoo.com/search?p=..."
+    alias:
+      - y
+  ask:
+    url: "https://ask.com/web?q=..."
+    alias:
+      - a
+  ecosia:
+    url: "https://www.ecosia.org/search?q=..."
+    alias:
+      - eco
+  wolframalpha:
+    url: "https://www.wolframalpha.com/input/?i=..."
+    alias:
+      - wa
+  wikipedia:
+    url: "https://en.wikipedia.org/wiki/Special:Search?search=..."
+    alias:
+      - wp
+  reddit:
+    url: "https://www.reddit.com/search/?q=..."
+    alias:
+      - r
+  quora:
+    url: "https://www.quora.com/search?q=..."
+    alias:
+      - q
+
+linux:
+  archwiki:
+    url: "https://wiki.archlinux.org/index.php?search=..."
+    alias:
+      - aw
+  ubuntuwiki:
+    url: "https://help.ubuntu.com/community/Search?action=search&value=..."
+    alias:
+      - uw
+  gentoo_wiki:
+    url: "https://wiki.gentoo.org/index.php?search=..."
+    alias:
+      - gw
+  centoswiki:
+    url: "https://wiki.centos.org/action/fullsearch/?value=..."
+    alias:
+      - cw
+  debianwiki:
+    url: "https://wiki.debian.org/FrontPage?action=fullsearch&value=..."
+    alias:
+      - dw
+  redhat:
+    url: "https://access.redhat.com/site/search/site/..."
+    alias:
+      - rh
+  slackdocs:
+    url: "https://docs.slackware.com/start?do=search&id=..."
+    alias:
+      - sd
+
+packages:
+  npm:
+    url: "https://www.npmjs.com/search?q=..."
+    alias:
+      - np
+  pypi:
+    url: "https://pypi.org/search/?q=..."
+    alias:
+      - pyp
+  dockerhub:
+    url: "https://hub.docker.com/search?q=..."
+    alias:
+      - dh
+  cargo:
+    url: "https://crates.io/search?q=..."
+    alias:
+      - cr
+  rubygems:
+    url: "https://rubygems.org/search?query=..."
+    alias:
+      - rg
+  maven:
+    url: "https://mvnrepository.com/search?q=..."
+    alias:
+      - mvn
+  packagist:
+    url: "https://packagist.org/search/?q=..."
+    alias:
+      - pg
+  nuget:
+    url: "https://www.nuget.org/packages?q=..."
+    alias:
+      - ng
+  aur:
+    url: "https://aur.archlinux.org/packages?K=..."
+    alias:
+      - aur
+
+development:
+  github:
+    url: "https://github.com/search?q=..."
+    alias:
+      - gh
+  gitlab:
+    url: "https://gitlab.com/search?search=..."
+    alias:
+      - gl
+  bitbucket:
+    url: "https://bitbucket.org/repo/all?name=..."
+    alias:
+      - bb
+  stackoverflow:
+    url: "https://stackoverflow.com/search?q=..."
+    alias:
+      - so
+  stackexchange:
+    url: "https://stackexchange.com/search?q=..."
+    alias:
+      - se
+  devto:
+    url: "https://dev.to/search?q=..."
+    alias:
+      - dev
+  medium:
+    url: "https://medium.com/search?q=..."
+    alias:
+      - m
+
+documentation:
+  mozilla:
+    url: "https://developer.mozilla.org/search?q=..."
+    alias:
+      - mdn
+  devdocs:
+    url: "https://devdocs.io/#q=..."
+    alias:
+      - dd
+  techdocs:
+    url: "https://techdocs.org/search/?query=..."
+    alias:
+      - td
+  vscodedoc:
+    url: "https://code.visualstudio.com/docs?q=..."
+    alias:
+      - vsc
+  python:
+    url: "https://www.python.org/search/?q=..."
+    alias:
+      - py
+  numpy:
+    url: "https://numpy.org/search.html?q=..."
+    alias:
+      - npy
+  pandas:
+    url: "https://pandas.pydata.org/search.html?q=..."
+    alias:
+      - pds
+
+ai:
+  chatgpt:
+    url: "https://chatgpt.com?q=..."
+    alias:
+      - gpt
+  mistral:
+    url: "https://chat.mistral.ai/chat?q=..."
+    alias:
+      - mst
+  iaskai:
+    url: "https://iask.ai/search?q=..."
+    alias:
+      - iask
+  phind:
+    url: "https://www.phind.com/search?q=..."
+    alias:
+      - ph
+  perplexity:
+    url: "https://www.perplexity.ai/?q=..."
+    alias:
+      - px
