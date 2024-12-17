@@ -1,45 +1,5 @@
 #!/bin/bash
 
-_web_complete() {
-    WEB_BOOKMARKS=${BASH_SOURCE%/*}/yml/bookmarks.yml
-    WEB_ENGINES=${BASH_SOURCE%/*}/yml/engines.yml
-    local cur prev opts bookmarks_list engines_list
-
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--add --list --search --remove"
-    cats="bookmarks protocols browsers engines"
-
-    if [[ -f "$WEB_BOOKMARKS" ]]; then
-        bookmarks_list=$(yq eval 'keys | .[]' "$WEB_BOOKMARKS" 2>/dev/null | tr '\n' ' ')
-    fi
-
-    if [[ -f "$WEB_ENGINES" ]]; then
-        engines_list=$(yq eval 'to_entries[] | .value | keys | .[]' "$WEB_ENGINES" 2>/dev/null | tr '\n' ' ')
-    fi
-
-    case "${prev}" in
-        web|wb)
-            if [[ "$cur" == -* || "$cur" == "" ]]; then
-                COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
-            else
-                COMPREPLY=( $(compgen -W "$bookmarks_list" -- "$cur") )
-            fi
-            ;;
-        -l|--list|list)
-            COMPREPLY=( $(compgen -W "$cats" -- "$cur") )
-            ;;
-        -r|--remove|rm)
-            COMPREPLY=( $(compgen -W "$bookmarks_list" -- "$cur") )
-            ;;
-        -s|--search|search)
-            COMPREPLY=( $(compgen -W "$engines_list" -- "$cur") )
-        ;;
-    esac 
-}
-
-complete -F _web_complete web
-complete -F _web_complete wb
 
 web() {
     WEB_BOOKMARKS=${BASH_SOURCE%/*}/yml/bookmarks.yml
@@ -102,7 +62,7 @@ ALIASES:
         local accepted_protocols=(http https)
 
         local protocol_list
-        protocol_list=$(yq eval '.protocol | with_entries(select(. == true)) | keys' -o=tsv "$WEB_CONF" 2>/dev/null) || protocol_list=""
+        protocol_list=$(yq eval '.protocol | with_entries(select(.value == true)) | keys | .[]' -o=tsv "$WEB_CONF" 2>/dev/null)
 
         if [[ -n "$protocol_list" ]]; then
             IFS=$'\n' read -r -d '' -a accepted_protocols <<< "$protocol_list"
