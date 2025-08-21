@@ -158,7 +158,7 @@ documentation:
     alias:
       - vsc
   python:
-    url: "https://www.python.org/search/?q=..."
+    url: "https://docs.python.org/3/search.html?q=..."
     alias:
       - py
   numpy:
