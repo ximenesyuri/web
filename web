@@ -396,7 +396,7 @@ _web_complete() {
             COMPREPLY=( $(compgen -W "$engines_list" -- "$cur") )
             ;;
         *)
-            if [[ "${COMP_WORDS[0]}" == "web" || "${COMP_WORDS[0]}" == "wb" ]]; then
+            if [[ "${COMP_WORDS[0]}" == "web" || "${COMP_WORDS[0]}" == "w" ]]; then
                 if [[ "$cur" == -* ]]; then
                     COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
                     return 0
