@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 web() {
     WEB_BOOKMARKS=${BASH_SOURCE%/*}/yml/bookmarks.yml
     if [[ ! -f "$WEB_BOOKMARKS" ]]; then
@@ -326,4 +325,95 @@ ALIASES:
     esac
 }
 
-alias wb="web"
+_web_complete() {
+    WEB_BOOKMARKS=${BASH_SOURCE%/*}/yml/bookmarks.yml
+    WEB_ENGINES=${BASH_SOURCE%/*}/yml/engines.yml
+    local cur prev opts bookmarks_list engines_list
+
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--add --list --search --remove"
+    cats="bookmarks protocols browsers engines"
+
+    if [[ -f "$WEB_BOOKMARKS" ]]; then
+        bookmarks_list=$(yq eval 'keys | .[]' "$WEB_BOOKMARKS" 2>/dev/null | tr '
+' ' ')
+    fi
+
+    if [[ -f "$WEB_ENGINES" ]]; then
+        engines_list=$(yq eval 'to_entries[] | .value | keys | .[]' "$WEB_ENGINES" 2>/dev/null | tr '
+' ' ')
+    fi
+
+    _bookmark_children() {
+        local cword_index=$1
+        local -a tokens
+        local i
+        local token
+        local yq_path=""
+        if [[ $cword_index -le 1 ]]; then
+            echo "$bookmarks_list"
+            return
+        fi
+
+        local count=$((cword_index - 1))
+        tokens=("${COMP_WORDS[@]:1:count}")
+
+        local -a parts
+        for i in "${!tokens[@]}"; do
+            token="${tokens[i]}"
+            token="${token//:/.}"
+            parts+=("$token")
+        done
+
+        local IFS='.'
+        yq_path="${parts[*]}"
+
+        if [[ -n "$yq_path" ]]; then
+            yq eval "(.${yq_path} // {}) | keys | .[]" "$WEB_BOOKMARKS" 2>/dev/null | tr '
+' ' '
+        else
+            yq eval 'keys | .[]' "$WEB_BOOKMARKS" 2>/dev/null | tr '
+' ' '
+        fi
+    }
+
+    case "${prev}" in
+        web|wb)
+            if [[ "$cur" == -* || "$cur" == "" ]]; then
+                COMPREPLY=( $(compgen -W "$opts $bookmarks_list" -- "$cur") )
+            else
+                COMPREPLY=( $(compgen -W "$bookmarks_list" -- "$cur") )
+            fi
+            ;;
+        -l|--list|list)
+            COMPREPLY=( $(compgen -W "$cats" -- "$cur") )
+            ;;
+        -r|--remove|rm)
+            COMPREPLY=( $(compgen -W "$bookmarks_list" -- "$cur") )
+            ;;
+        -s|--search|search)
+            COMPREPLY=( $(compgen -W "$engines_list" -- "$cur") )
+            ;;
+        *)
+            if [[ "${COMP_WORDS[0]}" == "web" || "${COMP_WORDS[0]}" == "wb" ]]; then
+                if [[ "$cur" == -* ]]; then
+                    COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+                    return 0
+                fi
+                local children
+                children="$(_bookmark_children "$COMP_CWORD")"
+                if [[ -n "$children" ]]; then
+                    COMPREPLY=( $(compgen -W "$children" -- "$cur") )
+                else
+                    COMPREPLY=( $(compgen -W "$bookmarks_list" -- "$cur") )
+                fi
+            fi
+            ;;
+    esac
+}
+
+complete -F _web_complete web
+complete -F _web_complete w
+
+alias w="web"
