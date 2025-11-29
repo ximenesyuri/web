@@ -379,7 +379,7 @@ _web_complete() {
     }
 
     case "${prev}" in
-        web|wb)
+        web|w)
             if [[ "$cur" == -* || "$cur" == "" ]]; then
                 COMPREPLY=( $(compgen -W "$opts $bookmarks_list" -- "$cur") )
             else
