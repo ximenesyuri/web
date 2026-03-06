@@ -1,29 +1,39 @@
 #!/bin/bash
 
+WEB_DIR=${BASH_SOURCE%/*}
+WEB_BOOKMARKS="${WEB_BOOKMARKS:-$WEB_DIR/json/bookmarks.json}"
+WEB_CONF="${WEB_CONF:-$WEB_DIR/json/conf.json}"
+WEB_BROWSERS="${WEB_BROWSERS:-$WEB_DIR/json/browser.json}"
+WEB_ENGINES="${WEB_ENGINES:-$WEB_DIR/json/engines.json}"
+
 web() {
-    WEB_BOOKMARKS=${BASH_SOURCE%/*}/yml/bookmarks.yml
-    if [[ ! -f "$WEB_BOOKMARKS" ]]; then
-        touch $WEB_BOOKMARKS
-    fi
-    WEB_CONF=${BASH_SOURCE%/*}/yml/conf.yml
-    if [[ ! -f "$WEB_CONF" ]]; then
-        touch $WEB_CONF
-    fi
-    WEB_BROWSERS=${BASH_SOURCE%/*}/yml/browser.yml
-    WEB_ENGINES=${BASH_SOURCE%/*}/yml/engines.yml
+    if ! command -v jq &> /dev/null; then
+        echo "Error: 'jq' is required but not found."
+        return 1
+    fi 
+    for f in "$WEB_BOOKMARKS" "$WEB_CONF" "$WEB_BROWSERS" "$WEB_ENGINES"; do
+        if [[ ! -f "$f" ]]; then
+            mkdir -p "$(dirname "$f")"
+            printf '{}\n' >"$f"
+        elif [[ ! -s "$f" ]]; then
+            printf '{}\n' >"$f"
+        fi
+    done
 
     function load_config() {
-        WEB_BROWSER=$(yq eval '.default.browser' $WEB_CONF)
-        WEB_ENGINE=$(yq eval '.default.search' $WEB_CONF)
+        WEB_BROWSER=$(jq -r '.default.browser // empty' "$WEB_CONF")
+        WEB_ENGINE=$(jq -r '.default.search // empty' "$WEB_CONF")
 
         declare -gA WEB_browser_cmd
-        for browser in $(yq eval '. | keys' $WEB_BROWSERS -o=tsv); do
-            WEB_browser_cmd[$browser,cmd]=$(yq eval ".${browser}.cmd" $WEB_BROWSERS)
-            WEB_browser_cmd[$browser,private]=$(yq eval ".${browser}.private" $WEB_BROWSERS)
-            WEB_browser_cmd[$browser,profile]=$(yq eval ".${browser}.profile" $WEB_BROWSERS)
+
+        local browser
+        for browser in $(jq -r 'keys[]' "$WEB_BROWSERS"); do
+            WEB_browser_cmd[$browser,cmd]=$(jq -r --arg b "$browser" '.[$b].cmd // empty' "$WEB_BROWSERS")
+            WEB_browser_cmd[$browser,private]=$(jq -r --arg b "$browser" '.[$b].private // empty' "$WEB_BROWSERS")
+            WEB_browser_cmd[$browser,profile]=$(jq -r --arg b "$browser" '.[$b].profile // empty' "$WEB_BROWSERS")
         done
 
-        WEB_protocols=($(yq eval '.protocol | keys' $WEB_CONF -o=tsv))
+        WEB_protocols=($(jq -r '.protocol | keys[]' "$WEB_CONF" 2>/dev/null))
     }
 
     function print_help(){
@@ -61,12 +71,18 @@ ALIASES:
         local accepted_protocols=(http https)
 
         local protocol_list
-        protocol_list=$(yq eval '.protocol | with_entries(select(.value == true)) | keys | .[]' -o=tsv "$WEB_CONF" 2>/dev/null)
+        protocol_list=$(jq -r '
+          .protocol
+          | to_entries
+          | map(select(.value == true))
+          | .[].key
+        ' "$WEB_CONF" 2>/dev/null)
 
         if [[ -n "$protocol_list" ]]; then
-            IFS=$'\n' read -r -d '' -a accepted_protocols <<< "$protocol_list"
+            IFS=$'\n' read -r -d '' -a accepted_protocols <<<"$protocol_list"$'\0'
         fi
 
+        local proto
         for proto in "${accepted_protocols[@]}"; do
             if [[ "$proto" == "$protocol" ]]; then
                 return 0
@@ -87,15 +103,27 @@ ALIASES:
             return 1
         fi
 
-        local yq_path="${full_name//:/\.}"
+        # Write bookmark using jq setpath
+        local tmp
+        tmp=$(mktemp)
 
-        yq eval --inplace \
-            ".${yq_path}.url = \"${url}\" | .${yq_path}.private = ${private} | .${yq_path}.profile = \"${profile}\"" \
-            "$WEB_BOOKMARKS"
-        if [[ ! "$?" == "0" ]]; then
+        if ! jq --arg ns "$full_name" \
+                --arg url "$url" \
+                --arg profile "$profile" \
+                --arg private "$private" '
+            . as $root
+            | ($ns | split(":")) as $p
+            | ($private == "true") as $pvt
+            | setpath($p + ["url"]; $url)
+            | setpath($p + ["private"]; $pvt)
+            | setpath($p + ["profile"]; $profile)
+        ' "$WEB_BOOKMARKS" >"$tmp" 2>/dev/null; then
+            rm -f "$tmp"
             return 1
         fi
-        
+
+        mv "$tmp" "$WEB_BOOKMARKS"
+
         echo "Bookmark '$full_name' added:"
         echo "url = '$url'"
         echo "private = '$private'"
@@ -117,17 +145,29 @@ ALIASES:
             return 1
         fi
 
-        local yq_path="${bookmark//:/\.}"
-
         local is_namespace
-        is_namespace=$(yq eval ".${yq_path} | type == \"!!map\"" "$WEB_BOOKMARKS")
+        is_namespace=$(jq -r --arg ns "$bookmark" '
+            ($ns | split(":")) as $p
+            | (try (getpath($p) | type) catch empty)
+        ' "$WEB_BOOKMARKS")
 
-        if [[ -n "$is_namespace" && $force_remove == false ]]; then
+        if [[ "$is_namespace" == "object" && $force_remove == false ]]; then
             echo "Error: '${bookmark}' is a namespace. Use '--force' to remove it."
             return 1
         fi
 
-        yq eval --inplace "del(.${yq_path})" "$WEB_BOOKMARKS"
+        local tmp
+        tmp=$(mktemp)
+
+        if ! jq --arg ns "$bookmark" '
+            ($ns | split(":")) as $p
+            | delpaths([$p])
+        ' "$WEB_BOOKMARKS" >"$tmp" 2>/dev/null; then
+            rm -f "$tmp"
+            return 1
+        fi
+
+        mv "$tmp" "$WEB_BOOKMARKS"
 
         if $force_remove; then
             echo "Namespace '$bookmark' removed."
@@ -163,7 +203,7 @@ ALIASES:
         fi
 
         if [[ -n "$profile" && "$profile" != "null" ]]; then
-           options+=" ${WEB_browser_cmd[$WEB_BROWSER,profile]} \"$profile\""
+            options+=" ${WEB_browser_cmd[$WEB_BROWSER,profile]} \"$profile\""
         fi
 
         if [[ -z "$cmd" ]]; then
@@ -176,26 +216,40 @@ ALIASES:
     } 
 
     function open_bookmark() {
-        local combined_name="$@"
-        local bookmark_path
+        local combined_name="$*"
+        local ns path_arg
 
+        # Accept either ":"-separated or space-separated namespaces
         if [[ "$combined_name" == *":"* ]]; then
-            bookmark_path="${combined_name//:/\.}"
+            ns="$combined_name"
         else
-            bookmark_path="${combined_name//\ /\.}"
+            ns="${combined_name// /:}"
         fi
 
-        local url
-        local private
-        local profile
-        url=$(yq eval ".${bookmark_path}.url" "$WEB_BOOKMARKS")
-        private=$(yq eval ".${bookmark_path}.private" "$WEB_BOOKMARKS")
-        profile=$(yq eval ".${bookmark_path}.profile" "$WEB_BOOKMARKS")
+        local url private profile
 
-        if [[ -z "$url" || "$url" == "null" ]]; then
+        url=$(jq -r --arg ns "$ns" '
+            ($ns | split(":")) as $p
+            | (try getpath($p) catch null) as $bm
+            | if $bm == null then empty else $bm.url // empty end
+        ' "$WEB_BOOKMARKS")
+
+        if [[ -z "$url" ]]; then
             echo "No bookmark found for '$combined_name'."
             return 1
         fi
+
+        private=$(jq -r --arg ns "$ns" '
+            ($ns | split(":")) as $p
+            | (try getpath($p) catch null) as $bm
+            | if $bm == null then "false" else ($bm.private // false | tostring) end
+        ' "$WEB_BOOKMARKS")
+
+        profile=$(jq -r --arg ns "$ns" '
+            ($ns | split(":")) as $p
+            | (try getpath($p) catch null) as $bm
+            | if $bm == null then "" else ($bm.profile // "") end
+        ' "$WEB_BOOKMARKS")
 
         open_url "$url" "$private" "$profile"
     }    
@@ -209,14 +263,10 @@ ALIASES:
             source="${WEB_ENGINE:-duckduckgo}"
         fi
 
-        local base_url=""
-        
-        for namespace in $(yq eval '. | keys' $WEB_ENGINES -o=tsv); do
-            base_url=$(yq eval ".${namespace}.${source}.url" $WEB_ENGINES)
-            if [[ -n "$base_url" && "$base_url" != "null" ]]; then
-                break
-            fi
-        done
+        local base_url
+        base_url=$(jq -r --arg src "$source" '
+            [ .[] | .[$src]? | select(. != null) | .url ][0] // empty
+        ' "$WEB_ENGINES")
 
         if [[ -z "$base_url" || "$base_url" == "null" ]]; then
             echo "No search engine found for '$source'."
@@ -230,12 +280,13 @@ ALIASES:
     function list_bookmarks() { 
         echo "Bookmarks:"
         echo "-----------"
-        yq eval '' $WEB_BOOKMARKS -o=p
+        jq '.' "$WEB_BOOKMARKS"
     }
 
     function list_protocols() {
         echo "Protocols:"
         echo "-----------"
+        local protocol
         for protocol in "${WEB_protocols[@]}"; do
             echo "- $protocol"
         done
@@ -244,16 +295,15 @@ ALIASES:
     function list_browsers() {
         echo "Browsers:"
         echo "-----------"
-        for browser in $(yq eval '. | keys' $WEB_BROWSERS -o=tsv); do
-            echo "- $browser"
-        done
+        jq -r 'keys[]' "$WEB_BROWSERS" | sed 's/^/- /'
     }
 
     function list_search_sources() {
         echo "Search Engines:"
         echo "----------------"
-        for namespace in $(yq eval '. | keys' $WEB_ENGINES -o=tsv); do
-            for engine in $(yq eval ".${namespace} | keys" $WEB_ENGINES -o=tsv); do
+        local namespace engine
+        for namespace in $(jq -r 'keys[]' "$WEB_ENGINES"); do
+            for engine in $(jq -r --arg ns "$namespace" '.[$ns] | keys[]' "$WEB_ENGINES"); do
                 echo "- ${namespace}.${engine}"
             done
         done
@@ -326,8 +376,6 @@ ALIASES:
 }
 
 _web_complete() {
-    WEB_BOOKMARKS=${BASH_SOURCE%/*}/yml/bookmarks.yml
-    WEB_ENGINES=${BASH_SOURCE%/*}/yml/engines.yml
     local cur prev opts bookmarks_list engines_list
 
     cur="${COMP_WORDS[COMP_CWORD]}"
@@ -336,13 +384,11 @@ _web_complete() {
     cats="bookmarks protocols browsers engines"
 
     if [[ -f "$WEB_BOOKMARKS" ]]; then
-        bookmarks_list=$(yq eval 'keys | .[]' "$WEB_BOOKMARKS" 2>/dev/null | tr '
-' ' ')
+        bookmarks_list=$(jq -r 'keys[]?' "$WEB_BOOKMARKS" 2>/dev/null | tr '\n' ' ')
     fi
 
     if [[ -f "$WEB_ENGINES" ]]; then
-        engines_list=$(yq eval 'to_entries[] | .value | keys | .[]' "$WEB_ENGINES" 2>/dev/null | tr '
-' ' ')
+        engines_list=$(jq -r 'to_entries[] | .value | keys[]?' "$WEB_ENGINES" 2>/dev/null | tr '\n' ' ')
     fi
 
     _bookmark_children() {
@@ -350,7 +396,8 @@ _web_complete() {
         local -a tokens
         local i
         local token
-        local yq_path=""
+        local jq_path=""
+
         if [[ $cword_index -le 1 ]]; then
             echo "$bookmarks_list"
             return
@@ -367,14 +414,20 @@ _web_complete() {
         done
 
         local IFS='.'
-        yq_path="${parts[*]}"
+        jq_path="${parts[*]}"
 
-        if [[ -n "$yq_path" ]]; then
-            yq eval "(.${yq_path} // {}) | keys | .[]" "$WEB_BOOKMARKS" 2>/dev/null | tr '
-' ' '
+        if [[ -n "$jq_path" ]]; then
+            jq -r --arg p "$jq_path" '
+                if $p == "" then
+                    keys[]?
+                else
+                    ($p | split(".")) as $path
+                    | (try getpath($path) catch {})
+                    | keys[]?
+                end
+            ' "$WEB_BOOKMARKS" 2>/dev/null | tr '\n' ' '
         else
-            yq eval 'keys | .[]' "$WEB_BOOKMARKS" 2>/dev/null | tr '
-' ' '
+            jq -r 'keys[]?' "$WEB_BOOKMARKS" 2>/dev/null | tr '\n' ' '
         fi
     }
 

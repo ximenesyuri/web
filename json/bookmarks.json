@@ -1,0 +1,268 @@
+{
+  "canva": {
+    "url": "https://www.canva.com/",
+    "private": false,
+    "profile": ""
+  },
+  "gh": {
+    "url": "https://github.com/ximenesyuri",
+    "private": false,
+    "profile": "",
+    "app": {
+      "url": "https://github.com/ximenesyuri/app",
+      "private": false,
+      "profile": ""
+    },
+    "typed": {
+      "url": "https://github.com/ximenesyuri/typed",
+      "private": false,
+      "profile": ""
+    },
+    "utils": {
+      "url": "https://github.com/ximenesyuri/utils",
+      "private": false,
+      "profile": ""
+    },
+    "cly": {
+      "url": "https://github.com/ximenesyuri/cly",
+      "private": false,
+      "profile": ""
+    }
+  },
+  "openai": {
+    "url": "https://platform.openai.com",
+    "private": false,
+    "profile": ""
+  },
+  "lnkd": {
+    "url": "https://linkedin.com/in/ximenesyuri",
+    "private": false,
+    "profile": ""
+  },
+  "spt": {
+    "url": "https://open.spotify.com",
+    "private": false,
+    "profile": ""
+  },
+  "vor": {
+    "whats": {
+      "url": "https://web.whatsapp.com/",
+      "private": false,
+      "profile": ""
+    },
+    "drive": {
+      "url": "http://drive.vortice.digital",
+      "private": false,
+      "profile": ""
+    },
+    "gmail": {
+      "url": "http://gmail.vortice.digital",
+      "private": false,
+      "profile": ""
+    },
+    "mail": {
+      "url": "http://gmail.vortice.digital",
+      "private": false,
+      "profile": ""
+    },
+    "admin": {
+      "url": "https://admin.google.com",
+      "private": false,
+      "profile": ""
+    },
+    "adm": {
+      "url": "https://admin.google.com",
+      "private": false,
+      "profile": ""
+    },
+    "sec": {
+      "url": "https://github.com/vorticed/sec",
+      "private": false,
+      "profile": ""
+    },
+    "gh": {
+      "url": "https://github.com/vorticed",
+      "private": false,
+      "profile": ""
+    },
+    "ctl": {
+      "url": "https://github.com/orgs/vorticed/projects/4/views/1",
+      "private": false,
+      "profile": ""
+    },
+    "ga": {
+      "url": "https://analytics.google.com",
+      "private": false,
+      "profile": ""
+    },
+    "tasks": {
+      "url": "https://github.com/orgs/vorticed/projects/5",
+      "private": false,
+      "profile": ""
+    },
+    "traefik": {
+      "url": "https://traefik.vortice.digital/dashboard/#/",
+      "private": false,
+      "profile": ""
+    },
+    "vault": {
+      "url": "https://vault.vortice.digital",
+      "private": false,
+      "profile": ""
+    },
+    "scripts": {
+      "url": "https://script.google.com/home",
+      "private": false,
+      "profile": ""
+    },
+    "open": {
+      "url": "https://open.vortice.digital",
+      "private": false,
+      "profile": ""
+    },
+    "pay": {
+      "url": "https://myaccount.payoneer.com",
+      "private": false,
+      "profile": ""
+    },
+    "gcp": {
+      "url": "https://console.cloud.google.com/welcome",
+      "private": false,
+      "profile": ""
+    }
+  },
+  "f": {
+    "utils": {
+      "url": "https://github.com/f-utils",
+      "private": false,
+      "profile": ""
+    },
+    "core": {
+      "url": "https://github.com/f-utils/f-core",
+      "private": false,
+      "profile": ""
+    },
+    "f": {
+      "url": "https://github.com/f-utils/f",
+      "private": false,
+      "profile": ""
+    }
+  },
+  "mgc": {
+    "console": {
+      "url": "https://console.magalu.cloud/login",
+      "private": false,
+      "profile": ""
+    },
+    "cli": {
+      "url": "https://github.com/MagaluCloud/mgccli",
+      "private": false,
+      "profile": ""
+    }
+  },
+  "host": {
+    "url": "https://hpanel.hostinger.com",
+    "private": false,
+    "profile": ""
+  },
+  "disc": {
+    "url": "https://discord.com/channels/1322680984558112819/1322680984558112822",
+    "private": false,
+    "profile": ""
+  },
+  "cloudflare": {
+    "url": "https://dash.cloudflare.com",
+    "private": false,
+    "profile": ""
+  },
+  "cf": {
+    "url": "https://dash.cloudflare.com",
+    "private": false,
+    "profile": ""
+  },
+  "gsc": {
+    "url": "https://search.google.com/search-console",
+    "private": false,
+    "profile": ""
+  },
+  "google-search-console": {
+    "url": "https://search.google.com/search-console",
+    "private": false,
+    "profile": ""
+  },
+  "whats": {
+    "url": "https://web.whatsapp.com/",
+    "private": false,
+    "profile": ""
+  },
+  "draw": {
+    "url": "https://draw.io",
+    "private": false,
+    "profile": ""
+  },
+  "openrouter": {
+    "url": "https://openrouter.ai",
+    "private": false,
+    "profile": ""
+  },
+  "gmx": {
+    "url": "https://navigator-bs.gmx.com",
+    "private": false,
+    "profile": ""
+  },
+  "ascii": {
+    "url": "https://asciiflow.com",
+    "private": false,
+    "profile": ""
+  },
+  "yx": {
+    "url": "https://ximenesyuri.com",
+    "private": false,
+    "profile": ""
+  },
+  "gmail": {
+    "url": "https://mail.google.com",
+    "private": false,
+    "profile": ""
+  },
+  "dhgate": {
+    "url": "https://dg.dhgate.com/buyerdispute/disputeDeltail?rfxid=8aaadb6c96b3e92e0196c1621f3961d8",
+    "private": false,
+    "profile": ""
+  },
+  "drive": {
+    "url": "https://drive.google.com/drive/u/0/",
+    "private": false,
+    "profile": ""
+  },
+  "cal": {
+    "url": "https://calendar.google.com/calendar/u/0/r/week",
+    "private": false,
+    "profile": ""
+  },
+  "agenda": {
+    "url": "https://calendar.google.com/calendar/u/0/r/week",
+    "private": false,
+    "profile": ""
+  },
+  "vault": {
+    "url": "https://vault.vortice.digital",
+    "private": false,
+    "profile": ""
+  },
+  "reddit": {
+    "url": "https://www.reddit.com",
+    "private": false,
+    "profile": ""
+  },
+  "open": {
+    "url": "https://open.vortice.digital",
+    "private": false,
+    "profile": ""
+  },
+  "hug": {
+    "url": "https://huggingface.co/",
+    "private": false,
+    "profile": ""
+  }
+}
