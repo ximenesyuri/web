@@ -1,3 +1,7 @@
+# ARCHIVED
+
+The following repository is being archived because it was converted to a tool in the [omni shell](https://github.com/omnishell) project. 
+
 # About
 
 `web` is a `bash` function to perform web searches and manage bookmarks from terminal, with configurations in YAML.
